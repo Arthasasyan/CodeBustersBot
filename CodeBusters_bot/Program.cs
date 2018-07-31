@@ -110,21 +110,14 @@ class Buster : Entity
 
     public void Explore()
     {
-        Point center = new Point(8000, 4500);
-        if(!Position.Equals(center))
-            MoveTo(center);
+        if (Id %2==0)
+        {
+            MoveTo(new Point(10000,5000));//moving right
+        }
         else
         {
-            if (Id == 0)
-            {
-                MoveTo(new Point(16000,0));//moving right
-            }
-            else
-            {
-                MoveTo(new Point(0,9000));//moving left
-            }
+            MoveTo(new Point(5000,7000));//moving left
         }
-
     }
 
     public void Release()
@@ -168,10 +161,13 @@ class Player
         //game loop
         while (true)
         {
+
             int entities = int.Parse(Console.ReadLine()); // the number of busters and ghosts visible to you
+            Console.Error.WriteLine(entities);
             for (int i = 0; i < entities; i++)
             {
                 string[] inputs = Console.ReadLine().Split(' ');
+
                 int entityId = int.Parse(inputs[0]); // buster id or ghost id
                 int x = int.Parse(inputs[1]);
                 int y = int.Parse(inputs[2]); // position of this buster / ghost
@@ -179,32 +175,34 @@ class Player
                 int state = int.Parse(inputs[4]); // For busters: 0=idle, 1=carrying a ghost.
                 int value = int.Parse(inputs[5]); // For busters: Ghost id being carried. For ghosts: number of busters attempting to trap this ghost.
                 Point position = new Point(x,y);
-                Console.Error.WriteLine("entityId "+ entityId+" Point: "+position+" entityType: "+entityType+" state: "+state+" value: "+ value);
+                Console.Error.WriteLine(i+": entityId "+ entityId+" Point: "+position+" entityType: "+entityType+" state: "+state+" value: "+ value);
                 if(entityType==myTeamId)
                 {
-                        if (friends.Count < 2)
-                        {
-                            friends.Add(new Buster(position, entityId, "Friend"));
-                            break;
-                        }
+                    if (friends.Count < bustersPerPlayer)
+                    {
+                        friends.Add(new Buster(position, entityId, "Friend"));
+                        continue;
+                    }
 
-                        Buster buster = friends[entityId];
-                        bool isCarrying = (state == 0 ? false : true);
-                        buster.IsCarrying = isCarrying;
-                        if (isCarrying)
+                    Buster buster = friends[entityId%bustersPerPlayer];
+                    buster.Position = position;
+
+                    bool isCarrying = (state == 0 ? false : true);
+                    buster.IsCarrying = isCarrying;
+                    if (isCarrying)
+                    {
+                        foreach (var ghost in ghosts)
                         {
-                            foreach (var ghost in ghosts)
+                            if (ghost.Id ==value)
                             {
-                                if (ghost.Id ==value)
-                                {
-                                    buster.GhostCarryied = ghost;
-                                    ghosts.Remove(ghost);
-                                    break;
-                                }
-
+                                buster.GhostCarryied = ghost;
+                                ghosts.Remove(ghost);
+                                break;
                             }
 
                         }
+
+                    }
                 }
                 else if (entityType == -1)
                 {
@@ -225,23 +223,31 @@ class Player
                     ghost.Position = position;
                     ghost.NumberOfBusters = value;
                 }
-
-                foreach (var ghost in ghosts)
-                {
-                    ghost.Timer--;
-                    if (ghost.Timer == 0)
-                        ghosts.Remove(ghost); //removing old ghosts
-                }
             }
 
-            for (int i = 0; i < bustersPerPlayer; i++)
+            try
+            {
+                foreach (var ghost in ghosts)
+                {
+
+                    if (ghost.Timer == 0)
+                        ghosts.Remove(ghost); //removing old ghosts
+                    ghost.Timer--;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+            }
+
+            foreach (var buster in friends)
             {
 
                 // Write an action using Console.WriteLine()
                 // To debug: Console.Error.WriteLine("Debug messages...");
 
                 // MOVE x y | BUST id | RELEASE
-                Buster buster = friends[i];
+
                 if(!buster.IsCarrying) //if buster if not carrying a ghost
                 {
                     if (ghosts.Count == 0)
