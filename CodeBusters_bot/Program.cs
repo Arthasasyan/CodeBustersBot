@@ -77,11 +77,15 @@ class Buster : Entity
 {
     public bool IsCarrying { get; set; }
     public Ghost GhostCarryied { get; set; }
+    public static Random Generator { get; set; } //used for exploring
+
+    private Point explorePoint;
 
     public Buster(Point position, int id, String team, bool isCarrying=false, Ghost ghostCarryied=null) : base(position, id, team + "_Buster")
     {
         IsCarrying = isCarrying;
         GhostCarryied = ghostCarryied;
+        explorePoint=new Point(8000,4500); //moving to center
     }
 
 
@@ -110,15 +114,22 @@ class Buster : Entity
 
     public void Explore()
     {
-        if (Id %2==0)
+        if (Position.Equals(explorePoint))
         {
-            MoveTo(new Point(10000,5000));//moving right
+
+            if (Id % 2 == 0)
+            {
+                explorePoint = new Point(Generator.Next(8000, 16000), Generator.Next(0, 4500)); //moving up
+
+            }
+            else
+            {
+                explorePoint=new Point(Generator.Next(0,8000), Generator.Next(4500,9000));
+            }
+
         }
-        else
-        {
-            MoveTo(new Point(5000,7000));//moving left
-        }
-    }
+        MoveTo(explorePoint);
+}
 
     public void Release()
     {
@@ -157,6 +168,8 @@ class Player
         List<Point> bases = new List<Point>();
         bases.Add(new Point(0,0));
         bases.Add(new Point(16000,9000));
+
+        Buster.Generator=new Random();
 
         //game loop
         while (true)
